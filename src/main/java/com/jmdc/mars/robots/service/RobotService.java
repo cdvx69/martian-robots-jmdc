@@ -5,6 +5,7 @@ import com.jmdc.mars.robots.dao.RobotDao;
 import com.jmdc.mars.robots.model.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 
 import java.sql.Date;
 import java.time.LocalDateTime;
@@ -28,6 +29,11 @@ public class RobotService {
     private static final String POSITION_PATTERN = "(\\d)(\\d)([N,S,W,E])";
     private RobotWorld robotWorld;
     private List<String> dangerCoordinates;
+
+    public RobotService(RobotDao robotDao, RobotDangerPointDao dangerPointDao) {
+        this.robotDao = robotDao;
+        this.dangerPointDao = dangerPointDao;
+    }
 
     public String processInputText(String text) {
         List<String> robotRequest = Arrays.asList(text.split("\n"));
@@ -183,8 +189,10 @@ public class RobotService {
     }
 
     public void saveDangerCoordinates() {
-        for(String coordinate : dangerCoordinates) {
-            dangerPointDao.saveAndFlush(new RobotDangerPoint(coordinate.substring(0,1), coordinate.substring(1), Date.valueOf(LocalDateTime.now().toLocalDate())));
+        if(!CollectionUtils.isEmpty(dangerCoordinates)) {
+            for (String coordinate : dangerCoordinates) {
+                dangerPointDao.saveAndFlush(new RobotDangerPoint(coordinate.substring(0, 1), coordinate.substring(1), Date.valueOf(LocalDateTime.now().toLocalDate())));
+            }
         }
     }
 
