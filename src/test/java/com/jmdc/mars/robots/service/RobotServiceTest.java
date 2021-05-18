@@ -8,7 +8,9 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
@@ -45,13 +47,23 @@ public class RobotServiceTest {
         when(mockRobotRequest.getRobots()).thenReturn(Arrays.asList(r1,r2,r3));
         when(mockRobotRequest.getWorld()).thenReturn(new RobotWorld(5,3));
 
+
+        List<String> dangerPoints = Arrays.asList("33");
+        RobotDangerPoint dp = new RobotDangerPoint("3","3");
+
+        when(mockDangerPoints.findAll())
+                .thenReturn(new ArrayList<>())
+                .thenReturn(Arrays.asList(dp));
+
         RobotResponse robotResponse = robotService.processInput(mockRobotRequest);
 
         assertThat(robotResponse.getRobots().size()).isEqualTo(3);
         assertThat(robotResponse.getMessage()).isEqualTo("OK");
 
+
         assertThat(robotResponse.getRobots().get(0).getPosition()).isEqualTo("11E");
         assertThat(robotResponse.getRobots().get(0).isLost()).isEqualTo(false);
+
 
         assertThat(robotResponse.getRobots().get(1).getPosition()).isEqualTo("33N");
         assertThat(robotResponse.getRobots().get(1).isLost()).isEqualTo(true);
@@ -61,9 +73,6 @@ public class RobotServiceTest {
 
         verify(mockRobotDao, times(3)).saveAndFlush(any(RobotPath.class));
         verify(mockDangerPoints, times(1)).saveAndFlush(any(RobotDangerPoint.class));
-
-        //assertThat(robotService.getDangerCoordinates().size()).isEqualTo(1);
-        //assertThat(robotService.getDangerCoordinates().get(0)).isEqualTo("33");
     }
 
 
@@ -81,8 +90,6 @@ public class RobotServiceTest {
         assertThat(robotResponse.getRobots().get(0).getPosition()).isEqualTo("11E");
         assertThat(robotResponse.getRobots().get(0).isLost()).isEqualTo(false);
 
-
-
     }
 
     @Test
@@ -98,8 +105,7 @@ public class RobotServiceTest {
 
         assertThat(robotResponse.getRobots().get(0).getPosition()).isEqualTo("33N");
         assertThat(robotResponse.getRobots().get(0).isLost()).isEqualTo(true);
-        assertThat(robotService.getDangerCoordinates().size()).isEqualTo(1);
-        assertThat(robotService.getDangerCoordinates().get(0)).isEqualTo("33");
+
     }
 
     @Test
@@ -115,8 +121,7 @@ public class RobotServiceTest {
 
         assertThat(robotResponse.getRobots().get(0).getPosition()).isEqualTo("33N");
         assertThat(robotResponse.getRobots().get(0).isLost()).isEqualTo(true);
-        assertThat(robotService.getDangerCoordinates().size()).isEqualTo(1);
-        assertThat(robotService.getDangerCoordinates().get(0)).isEqualTo("33");
+
     }
 
     @Test
@@ -132,7 +137,6 @@ public class RobotServiceTest {
 
         assertThat(robotResponse.getRobots().get(0).getPosition()).isEqualTo("10S");
         assertThat(robotResponse.getRobots().get(0).isLost()).isEqualTo(true);
-        assertThat(robotService.getDangerCoordinates().size()).isEqualTo(1);
-        assertThat(robotService.getDangerCoordinates().get(0)).isEqualTo("10");
+
     }
 }

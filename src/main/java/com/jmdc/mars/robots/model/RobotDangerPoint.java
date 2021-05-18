@@ -31,6 +31,11 @@ public class RobotDangerPoint implements Serializable {
         this.date = date;
     }
 
+    public RobotDangerPoint(String coordx, String coordy) {
+        this.coordx = coordx;
+        this.coordy = coordy;
+    }
+
     public String getCoordx() {
         return coordx;
     }

@@ -5,8 +5,11 @@ import com.jmdc.mars.robots.dao.RobotDao;
 import com.jmdc.mars.robots.model.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+//import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.StreamUtils;
 
+import javax.transaction.Transactional;
 import java.sql.Date;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -15,6 +18,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 @Service
 public class RobotService {
@@ -91,6 +95,8 @@ public class RobotService {
         return robot;
     }
 
+
+    @Transactional
     private Robot changeRobotPosition(Robot robot) {
         RobotPosition robotPosition = mapStringToRobotPosition(robot.getPosition());
         RobotPosition.Orientation orientation = robotPosition.getOrientation();
@@ -116,7 +122,9 @@ public class RobotService {
         if(robotWorld.isOutOfWorld(newCoordX, newCoordY)) {
             if(!getDangerCoordinates().contains(robotPosition.getStringCoordinates())) {
                 robot.setLost(true);
-                dangerCoordinates.add(robotPosition.getStringCoordinates());
+//                dangerCoordinates.add(robotPosition.getStringCoordinates());
+                saveDangerCoordinate(robotPosition.getRobotx(), robotPosition.getRoboty());
+
             }
         } else {
             robot.setPosition(newPosition);
@@ -181,11 +189,19 @@ public class RobotService {
         this.robotWorld = robotWorld;
     }
 
-    public List<String> getDangerCoordinates() {
+    public List<String> getDangerCoordinates_old() {
         if(dangerCoordinates == null) {
             dangerCoordinates = new ArrayList<>();
         }
         return dangerCoordinates;
+    }
+
+    public List<String> getDangerCoordinates() {
+        List<RobotDangerPoint> dangerPoints = new ArrayList<>(dangerPointDao.findAll());
+        if(!CollectionUtils.isEmpty(dangerPoints)) {
+            return dangerPoints.stream().map(item -> item.getCoordx().concat(item.getCoordy())).collect(Collectors.toList());
+        }
+        return new ArrayList<>();
     }
 
     public void saveDangerCoordinates() {
@@ -194,6 +210,10 @@ public class RobotService {
                 dangerPointDao.saveAndFlush(new RobotDangerPoint(coordinate.substring(0, 1), coordinate.substring(1), Date.valueOf(LocalDateTime.now().toLocalDate())));
             }
         }
+    }
+
+    public void saveDangerCoordinate(int x, int y){
+        dangerPointDao.saveAndFlush(new RobotDangerPoint(String.valueOf(x), String.valueOf(y), Date.valueOf(LocalDateTime.now().toLocalDate())));
     }
 
 }
