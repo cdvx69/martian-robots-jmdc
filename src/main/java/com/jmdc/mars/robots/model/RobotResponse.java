@@ -31,4 +31,12 @@ public class RobotResponse {
     public void setMessage(String message) {
         this.message = message;
     }
+
+    @Override
+    public String toString() {
+        return "RobotResponse{" +
+                "robots=" + robots +
+                ", message='" + message + '\'' +
+                '}';
+    }
 }

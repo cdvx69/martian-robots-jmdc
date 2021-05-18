@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import javax.ws.rs.NotFoundException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -138,5 +139,25 @@ public class RobotServiceTest {
         assertThat(robotResponse.getRobots().get(0).getPosition()).isEqualTo("10S");
         assertThat(robotResponse.getRobots().get(0).isLost()).isEqualTo(true);
 
+    }
+
+    @Test
+    public void processWrongPosition() {
+        Robot r1 = new Robot("10H", "FLL");
+        when(mockRobotRequest.getRobots()).thenReturn(Arrays.asList(r1));
+        when(mockRobotRequest.getWorld()).thenReturn(new RobotWorld(5,3));
+
+        assertThatThrownBy(() -> robotService.processInput(mockRobotRequest))
+                .isInstanceOf(IllegalArgumentException.class);
+
+    }
+
+    @Test
+    public void findLostRobotsTest() {
+        RobotPath rp = new RobotPath("3","3");
+        when(mockRobotDao.findLostRobots()).thenReturn(Arrays.asList(rp));
+        RobotResponse lostRobots = robotService.findLostRobots();
+        assertThat(lostRobots.getMessage()).isNotBlank();
+        assertThat(lostRobots.getMessage()).contains("found 1 lost robots");
     }
 }

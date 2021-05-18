@@ -35,6 +35,16 @@ public class RobotControllerSp {
     }
 
     @RequestMapping(
+            method = RequestMethod.GET,
+            path = "/lostrobots",
+            produces = MediaType.APPLICATION_JSON_VALUE
+
+    )
+    public RobotResponse findLostRobots() {
+        return robotService.findLostRobots();
+    }
+
+    @RequestMapping(
             method = RequestMethod.POST,
             path = "/processInput",
             produces = MediaType.TEXT_PLAIN_VALUE,

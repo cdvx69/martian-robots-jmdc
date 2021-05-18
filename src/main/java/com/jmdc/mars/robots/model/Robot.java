@@ -55,4 +55,14 @@ public class Robot {
     public void setMessage(String message) {
         this.message = message;
     }
+
+    @Override
+    public String toString() {
+        return "Robot{" +
+                "position='" + position + '\'' +
+                ", movement='" + movement + '\'' +
+                ", lost=" + lost +
+                ", message='" + message + '\'' +
+                '}';
+    }
 }

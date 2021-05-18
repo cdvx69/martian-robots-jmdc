@@ -5,16 +5,13 @@ import com.jmdc.mars.robots.dao.RobotDao;
 import com.jmdc.mars.robots.model.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-//import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
-import org.springframework.util.StreamUtils;
 
 import javax.transaction.Transactional;
 import java.sql.Date;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -32,7 +29,6 @@ public class RobotService {
     @SuppressWarnings("RegExpDuplicateCharacterInClass")
     private static final String POSITION_PATTERN = "(\\d)(\\d)([N,S,W,E])";
     private RobotWorld robotWorld;
-    private List<String> dangerCoordinates;
 
     public RobotService(RobotDao robotDao, RobotDangerPointDao dangerPointDao) {
         this.robotDao = robotDao;
@@ -40,9 +36,24 @@ public class RobotService {
     }
 
     public String processInputText(String text) {
-        List<String> robotRequest = Arrays.asList(text.split("\n"));
-        findLostRobots();
-        return "hola";
+        List<String> lines = Arrays.asList(text.split("\n"));
+        RobotWorld world = new RobotWorld(Integer.parseInt(lines.get(0).split("\\s")[0]), Integer.parseInt(lines.get(0).split("\\s")[1]));
+        List<Robot> robots = new ArrayList<>();
+        for(int i=1; i<lines.size(); i = i+2) {
+            String position = lines.get(i).replaceAll("\\s", "").trim();
+            String movement = lines.get(i+1).trim();
+            Robot robot = new Robot(position, movement);
+            robots.add(robot);
+        }
+        RobotRequest robotRequest = new RobotRequest(world, robots);
+        RobotResponse response = processInput(robotRequest);
+        return response.toString();
+    }
+
+    public RobotResponse findLostRobots() {
+        RobotResponse response = new RobotResponse();
+        response.setMessage(String.format("found %s lost robots", robotDao.findLostRobots().size()));
+        return response;
     }
 
     public RobotResponse processInput(RobotRequest robotRequest) {
@@ -58,7 +69,6 @@ public class RobotService {
 
         // serialize to bbdd
         saveRobots(calculatedRobotList);
-        saveDangerCoordinates();
 
         RobotResponse response = new RobotResponse();
         response.setMessage("OK");
@@ -180,20 +190,8 @@ public class RobotService {
         return String.valueOf(x).concat(String.valueOf(y).concat(orientation));
     }
 
-    public List<RobotPath> findLostRobots () {
-        Collection<RobotPath> lostRobots = robotDao.findLostRobots();
-        return new ArrayList<>(lostRobots);
-    }
-
     private void setWorld(RobotWorld robotWorld) {
         this.robotWorld = robotWorld;
-    }
-
-    public List<String> getDangerCoordinates_old() {
-        if(dangerCoordinates == null) {
-            dangerCoordinates = new ArrayList<>();
-        }
-        return dangerCoordinates;
     }
 
     public List<String> getDangerCoordinates() {
@@ -202,14 +200,6 @@ public class RobotService {
             return dangerPoints.stream().map(item -> item.getCoordx().concat(item.getCoordy())).collect(Collectors.toList());
         }
         return new ArrayList<>();
-    }
-
-    public void saveDangerCoordinates() {
-        if(!CollectionUtils.isEmpty(dangerCoordinates)) {
-            for (String coordinate : dangerCoordinates) {
-                dangerPointDao.saveAndFlush(new RobotDangerPoint(coordinate.substring(0, 1), coordinate.substring(1), Date.valueOf(LocalDateTime.now().toLocalDate())));
-            }
-        }
     }
 
     public void saveDangerCoordinate(int x, int y){

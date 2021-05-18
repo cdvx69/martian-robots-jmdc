@@ -35,6 +35,11 @@ public class RobotPath implements Serializable {
         this.date = date;
     }
 
+    public RobotPath(String initialPos, String finalPos) {
+        this.initialPos = initialPos;
+        this.finalPos = finalPos;
+    }
+
     public String getInitialPos() {
         return initialPos;
     }

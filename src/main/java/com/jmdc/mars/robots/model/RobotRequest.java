@@ -29,4 +29,12 @@ public class RobotRequest {
     public List<Robot> getRobots() {
         return this.robots;
     }
+
+    @Override
+    public String toString() {
+        return "RobotRequest{" +
+                "robotWorld=" + robotWorld +
+                ", robots=" + robots.toString() +
+                '}';
+    }
 }
