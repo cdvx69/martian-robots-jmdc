@@ -5,6 +5,7 @@ import com.jmdc.mars.robots.model.RobotRequest;
 import com.jmdc.mars.robots.model.RobotResponse;
 import com.jmdc.mars.robots.model.RobotWorld;
 import org.aspectj.weaver.World;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -32,6 +33,13 @@ public class RestTemplateUserIntegrationTests {
     @Autowired
     private TestRestTemplate restTemplate;
 
+    @BeforeEach
+    public void setUp() {
+        // resetting danger points and processed robots for each test
+        restTemplate.exchange("/mars/robots/deleteDP", DELETE, null, String.class);
+        restTemplate.exchange("/mars/robots/deleteAll", DELETE, null, String.class);
+    }
+
     @Test
     public void itShouldFindZeroLostRobots() throws Exception {
         ResponseEntity<RobotResponse> response = restTemplate.exchange("/mars/robots/lostrobots", GET, null, RobotResponse.class);
@@ -45,17 +53,12 @@ public class RestTemplateUserIntegrationTests {
     public void itShouldProcessRobot() throws Exception {
         // given
         Robot robot = new Robot("11E","RFRFRFRF", false);
-        RobotWorld world = new RobotWorld(3,5);
+        RobotWorld world = new RobotWorld(5,3);
         RobotRequest request = new RobotRequest(world, Arrays.asList(robot));
 
         HttpHeaders requestHeaders = new HttpHeaders();
         requestHeaders.setContentType(MediaType.valueOf(MediaType.APPLICATION_JSON_VALUE));
-
         HttpEntity<RobotRequest> entity = new HttpEntity<>(request, requestHeaders);
-
-
-
-
 
         // when
         ResponseEntity<RobotResponse> responseEntity = restTemplate.exchange("/mars/robots/processInput", POST, entity, RobotResponse.class);
@@ -64,75 +67,66 @@ public class RestTemplateUserIntegrationTests {
         assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(responseEntity.getBody()).isNotNull();
         assertThat(responseEntity.getBody().getMessage()).isEqualTo("OK");
+        assertThat(responseEntity.getBody().getRobots()).hasSize(1);
+        assertThat(responseEntity.getBody().getRobots().get(0).getPosition()).isEqualTo("11E");
 
     }
 
     @Test
-    public void cccitShouldProcessRobot() throws Exception {
-    /*
-        ParameterizedTypeReference<List<User>> personList = new ParameterizedTypeReference<List<User>>() {
-        };
+    public void itShouldProcessLostRobot() throws Exception {
+        // given
+        Robot robot = new Robot("32N","FRRFLLFFRRFLL", false);
+        RobotWorld world = new RobotWorld(5,3);
+        RobotRequest request = new RobotRequest(world, Arrays.asList(robot));
 
-        // GET - ALL USERS
-        ResponseEntity<List<User>> response = restTemplate.exchange("/api/v1/users", GET, null, personList);
-        assertThat(response.getBody()).hasSize(0);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        HttpHeaders requestHeaders = new HttpHeaders();
+        requestHeaders.setContentType(MediaType.valueOf(MediaType.APPLICATION_JSON_VALUE));
+        HttpEntity<RobotRequest> entity = new HttpEntity<>(request, requestHeaders);
 
-        // POST - NEW USER
-        User bareUser = new User(null, "", "", null, 0, "");
-        HttpEntity<User> entity = new HttpEntity<>(bareUser, null);
-        ResponseEntity<String> exchange = restTemplate.exchange("/api/v1/users", POST, entity, String.class);
-        assertThat(exchange.getStatusCode()).isEqualTo(HttpStatus.OK);
+        // when
+        ResponseEntity<RobotResponse> responseEntity = restTemplate.exchange("/mars/robots/processInput", POST, entity, RobotResponse.class);
 
-        // GET - ALL USERS
-        response = restTemplate.exchange("/api/v1/users", GET, null, personList);
-        assertThat(response.getBody()).hasSize(1);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody().get(0)).isEqualToIgnoringNullFields(bareUser);
+        // then
+        assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(responseEntity.getBody()).isNotNull();
+        assertThat(responseEntity.getBody().getMessage()).isEqualTo("OK");
+        assertThat(responseEntity.getBody().getRobots()).hasSize(1);
+        assertThat(responseEntity.getBody().getRobots().get(0).getPosition()).isEqualTo("33N");
+        assertThat(responseEntity.getBody().getRobots().get(0).isLost()).isEqualTo(true);
 
-        // GET BY USER BY ID=1
-        ResponseEntity<User> getUserByIdResponse = restTemplate
-                .exchange("/api/v1/users/1", GET, null, User.class);
-        assertThat(getUserByIdResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(getUserByIdResponse.getBody()).isEqualToIgnoringNullFields(bareUser);
+    }
 
-        // PUT - UPDATE USER BY ID=1
-        User userToUpdate =
-                new User(UUID.fromString("1"), "John", "Jones", User.Gender.MALE, 22, "john.jones@gmail.com");
-        entity = new HttpEntity<>(userToUpdate, null);
-        ResponseEntity<User> updateUserByIdResponse = restTemplate
-                .exchange("/api/v1/users", PUT, entity, User.class);
-        assertThat(updateUserByIdResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+    @Test
+    public void itShouldProcessExampleInputRobots() throws Exception {
 
-        // GET - USER BY ID=1
-        getUserByIdResponse = restTemplate.exchange("/api/v1/users/1", GET, null, User.class);
-        assertThat(getUserByIdResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(getUserByIdResponse.getBody()).isEqualToComparingFieldByField(userToUpdate);
 
-        // POST - INSERT NEW USER
-        User userToInsert = new User(null, "Nelson", "Mandela", User.Gender.MALE, 33, "nelson.mandela@gmail.com");
-        entity = new HttpEntity<>(userToInsert, null);
-        ResponseEntity<User> insertUserResponse = restTemplate
-                .exchange("/api/v1/users", POST, entity, User.class, 1);
-        assertThat(insertUserResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        ResponseEntity<RobotResponse> response = restTemplate.exchange("/mars/robots/lostrobots", GET, null, RobotResponse.class);
 
-        // GET - ALL USERS
-        response = restTemplate.exchange("/api/v1/users", GET, null,
-                personList);
-        assertThat(response.getBody()).hasSize(2);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody().get(0)).isEqualToComparingFieldByField(userToUpdate);
-        assertThat(response.getBody().get(1)).isEqualToIgnoringNullFields(userToInsert);
+        // given
+        Robot robot1 = new Robot("11E","RFRFRFRF", false);
+        Robot robot2 = new Robot("32N","FRRFLLFFRRFLL", false);
+        Robot robot3 = new Robot("03W","LLFFFLFLFL", false);
+        RobotWorld world = new RobotWorld(5,3);
+        RobotRequest request = new RobotRequest(world, Arrays.asList(robot1, robot2, robot3));
 
-        // DELETE - USER BY ID=1
-        ResponseEntity<String> deleteUserResponse = restTemplate
-                .exchange("/api/v1/users/1", DELETE, null, String.class);
-        assertThat(deleteUserResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
-        response = restTemplate.exchange("/api/v1/users", GET, null,
-                personList);
-        assertThat(response.getBody()).hasSize(1);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody().get(0)).isEqualToIgnoringNullFields(userToInsert);
-*/
+        HttpHeaders requestHeaders = new HttpHeaders();
+        requestHeaders.setContentType(MediaType.valueOf(MediaType.APPLICATION_JSON_VALUE));
+        HttpEntity<RobotRequest> entity = new HttpEntity<>(request, requestHeaders);
+
+        // when
+        ResponseEntity<RobotResponse> responseEntity = restTemplate.exchange("/mars/robots/processInput", POST, entity, RobotResponse.class);
+
+        // then
+        assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(responseEntity.getBody()).isNotNull();
+        assertThat(responseEntity.getBody().getMessage()).isEqualTo("OK");
+        assertThat(responseEntity.getBody().getRobots()).hasSize(3);
+        assertThat(responseEntity.getBody().getRobots().get(0).getPosition()).isEqualTo("11E");
+        assertThat(responseEntity.getBody().getRobots().get(0).isLost()).isEqualTo(false);
+        assertThat(responseEntity.getBody().getRobots().get(1).getPosition()).isEqualTo("33N");
+        assertThat(responseEntity.getBody().getRobots().get(1).isLost()).isEqualTo(true);
+        assertThat(responseEntity.getBody().getRobots().get(2).getPosition()).isEqualTo("23S");
+        assertThat(responseEntity.getBody().getRobots().get(2).isLost()).isEqualTo(false);
+
     }
 }

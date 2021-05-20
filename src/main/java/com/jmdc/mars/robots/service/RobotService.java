@@ -10,9 +10,7 @@ import org.springframework.util.CollectionUtils;
 import javax.transaction.Transactional;
 import java.sql.Date;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -62,13 +60,16 @@ public class RobotService {
         setWorld(robotRequest.getWorld());
         //
         List<Robot> calculatedRobotList = new ArrayList<>();
+        Map<Robot, Robot> robotPaths = new HashMap<>();
         for(Robot robot: robotRequest.getRobots()) {
+            Robot initialRobot = new Robot(robot.getPosition(), robot.getMovement());
             Robot robotResult = calculateFinalRobotPosition(robot);
+            robotPaths.put(initialRobot, robotResult);
             calculatedRobotList.add(robotResult);
         }
 
         // serialize to bbdd
-        saveRobots(calculatedRobotList);
+        saveRobots(robotPaths);
 
         RobotResponse response = new RobotResponse();
         response.setMessage("OK");
@@ -76,10 +77,12 @@ public class RobotService {
         return response;
     }
 
-    private void saveRobots(List<Robot> robots) {
-        for(Robot robot: robots) {
-            RobotPosition robotPosition = mapStringToRobotPosition(robot.getPosition());
-            RobotPath rp = new RobotPath(String.valueOf(robotPosition.getRobotx()), String.valueOf(robotPosition.getRoboty()), robot.isLost(), Date.valueOf(LocalDateTime.now().toLocalDate()));
+    private void saveRobots(Map<Robot, Robot> robots) {
+        for(Robot initialRobot: robots.keySet()) {
+            Robot finalRobot = robots.get(initialRobot);
+            RobotPosition initialPosition = mapStringToRobotPosition(initialRobot.getPosition());
+            RobotPosition finalPosition = mapStringToRobotPosition(finalRobot.getPosition());
+            RobotPath rp = new RobotPath(mapPositionToString(initialPosition), mapPositionToString(finalPosition), initialRobot.getMovement(), finalRobot.isLost(), Date.valueOf(LocalDateTime.now().toLocalDate()));
             robotDao.saveAndFlush(rp);
         }
     }
@@ -132,14 +135,11 @@ public class RobotService {
         if(robotWorld.isOutOfWorld(newCoordX, newCoordY)) {
             if(!getDangerCoordinates().contains(robotPosition.getStringCoordinates())) {
                 robot.setLost(true);
-//                dangerCoordinates.add(robotPosition.getStringCoordinates());
                 saveDangerCoordinate(robotPosition.getRobotx(), robotPosition.getRoboty());
-
             }
         } else {
             robot.setPosition(newPosition);
         }
-
         return robot;
     }
 
@@ -204,6 +204,14 @@ public class RobotService {
 
     public void saveDangerCoordinate(int x, int y){
         dangerPointDao.saveAndFlush(new RobotDangerPoint(String.valueOf(x), String.valueOf(y), Date.valueOf(LocalDateTime.now().toLocalDate())));
+    }
+
+    public void deleteAllDangerPoints() {
+        dangerPointDao.deleteAll();
+    }
+
+    public void deleteAllProcessedRobots() {
+        robotDao.deleteAll();
     }
 
 }

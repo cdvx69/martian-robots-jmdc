@@ -19,6 +19,9 @@ public class RobotPath implements Serializable {
     @Column(name="FINALPOS")
     private String finalPos;
 
+    @Column(name="MOVEMENT")
+    private String movement;
+
     @Column(name="LOST")
     private boolean lost;
 
@@ -28,11 +31,12 @@ public class RobotPath implements Serializable {
     public RobotPath() {
     }
 
-    public RobotPath(String initialPos, String finalPos, boolean lost, Date date) {
+    public RobotPath(String initialPos, String finalPos, String movement, boolean lost, Date date) {
         this.initialPos = initialPos;
         this.finalPos = finalPos;
         this.lost = lost;
         this.date = date;
+        this.movement = movement;
     }
 
     public RobotPath(String initialPos, String finalPos) {
@@ -70,5 +74,13 @@ public class RobotPath implements Serializable {
 
     public void setDate(Date date) {
         this.date = date;
+    }
+
+    public String getMovement() {
+        return movement;
+    }
+
+    public void setMovement(String movement) {
+        this.movement = movement;
     }
 }

@@ -26,8 +26,7 @@ public class Robot {
         return position;
     }
 
-    // avoid serialization on response
-    @JsonIgnore
+    //@JsonIgnore
     public String getMovement() {
         return movement;
     }

@@ -8,15 +8,11 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import javax.ws.rs.NotFoundException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
-
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
 public class RobotServiceTest {
@@ -48,8 +44,6 @@ public class RobotServiceTest {
         when(mockRobotRequest.getRobots()).thenReturn(Arrays.asList(r1,r2,r3));
         when(mockRobotRequest.getWorld()).thenReturn(new RobotWorld(5,3));
 
-
-        List<String> dangerPoints = Arrays.asList("33");
         RobotDangerPoint dp = new RobotDangerPoint("3","3");
 
         when(mockDangerPoints.findAll())
